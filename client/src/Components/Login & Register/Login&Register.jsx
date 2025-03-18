@@ -9,62 +9,100 @@ function Login(){
     
   })
 
+  const [errors, setErrors] = useState({
+    username: "",
+    email: "",
+    password: ""
+  })
+
   const changeHandler = (e) => {
     setFormData({...formData,[e.target.name]:e.target.value})
+    validateField(e.target.name, e.target.value)
+  }
+
+  const validateField = (fieldName, value) => {
+    let error = "";
+    if (fieldName === "username") {
+      if (value.length < 3) {
+        error = "Username must be at least 3 characters long.";
+      }
+    } else if (fieldName === "email") {
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(value)) {
+        error = "Invalid email address.";
+      }
+    } else if (fieldName === "password") {
+      if (value.length < 8) {
+        error = "Password must be at least 8 characters long.";
+      }
+    }
+    setErrors({...errors, [fieldName]: error})
+  }
+
+  const validateForm = () => {
+    let isValid = true;
+    Object.keys(errors).forEach((field) => {
+      if (errors[field] == "") {
+        isValid = false;
+      }
+    });
+    return isValid;
   }
 
   const login = async () =>{
-    console.log("Login",formData)
-    let responseData;
-    
-    await fetch('http://localhost:9000/login',{
-      method:"POST",
-      headers:{
-        Accept:'application/form-data',
-        'Content-Type':'application/json'
-      },
-      body:JSON.stringify(formData),
-    }).then((res)=>res.json()).then((data)=>responseData=data)
-    if(responseData.success){
-      localStorage.setItem('auth-token',responseData.token)
-      window.location.replace("/");
-    }
-    else{
-      alert(responseData.error)
+    if (validateForm()) {
+      console.log("Login",formData)
+      let responseData;
+      
+      await fetch('http://localhost:9000/login',{
+        method:"POST",
+        headers:{
+          Accept:'application/form-data',
+          'Content-Type':'application/json'
+        },
+        body:JSON.stringify(formData),
+      }).then((res)=>res.json()).then((data)=>responseData=data)
+      if(responseData.success){
+        localStorage.setItem('auth-token',responseData.token)
+        window.location.replace("/");
+      }
+      else{
+        alert(responseData.error)
+      }
+    } else {
+      alert("Please fill in all fields correctly.")
     }
   }
 
   const signup = async () =>{
-    console.log("signup",formData)
-    let responseData;
-    var password  = formData.password;
-    var email = formData.email;
-    var username = formData.username;
-    if(username ==""){
-      document.getElementById("error").innerHTML=null;
-    }else if (email == "") {
-      document.getElementById("error").innerHTML=null;
-    }else if(password ==""){
-      document.getElementById("error").innerHTML=null;
-    }
-    else{
-    await fetch('http://localhost:9000/signup',{
-      method:"POST",
-      headers:{
-        Accept:'application/form-data',
-        'Content-Type':'application/json'
-      },
-      body:JSON.stringify(formData),
-    }).then((res)=>res.json()).then((data)=>responseData=data)
-    if(responseData.success){
-      localStorage.setItem('auth-token',responseData.token)
-      window.location.replace("/");
-    }
-    else{
-      alert(responseData.error)
+    if (validateForm()) {
+      console.log("signup",formData)
+      let responseData;
+      var password  = formData.password;
+      var email = formData.email;
+      var username = formData.username;
+      await fetch('http://localhost:9000/signup',{
+        method:"POST",
+        headers:{
+          Accept:'application/form-data',
+          'Content-Type':'application/json'
+        },
+        body:JSON.stringify(formData),
+      }).then((res)=>res.json()).then((data)=>responseData=data)
+      if(responseData.success){
+        localStorage.setItem('auth-token',responseData.token)
+        window.location.replace("/");
+      }
+      else{
+        alert(responseData.error)
+      }
+    } else {
+      alert("Please fill in all fields correctly.")
     }
   }
-  }
+  const handleSubmit = (event) => {
+    event.preventDefault();
+  };
 
     return(<>
   {/* Page Header Start */}
@@ -95,7 +133,7 @@ function Login(){
         <div className='col-lg-3'>
         </div>
       <div className="col-lg-7 mb-5 px-2 ">
-        <form>
+        <form onSubmit={handleSubmit}>
         <div className="form">
           <div id="success" />
             <div className="control-group">
@@ -111,7 +149,7 @@ function Login(){
             data-validation-required-message="Please enter your name"
           />:<></>  
             }
-              
+              {errors.username !== "" && <p style={{color: "red"}}>{errors.username}</p>}
             </div>
             <div  className="control-group">
               <input
@@ -123,7 +161,7 @@ function Login(){
                 required
                 data-validation-required-message="Please enter your email"
               />
-              
+              {errors.email !== "" && <p style={{color: "red"}}>{errors.email}</p>}
             </div>
             <div className="control-group">
               <input
@@ -135,7 +173,7 @@ function Login(){
                 required
                
               />
-               
+              {errors.password !== "" && <p style={{color: "red"}}>{errors.password}</p>}
             </div>
             <div>
               <button
